@@ -10,6 +10,7 @@ public class Robot {
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
     private LinearOpMode opMode;
+    private boolean isAuto;
 
     public Hanger hanger;
     public TeamMarkerer tm;
@@ -22,22 +23,23 @@ public class Robot {
      * @param hardwareMap instance of hardwareMap
      * @param telemetry instance of telemetry
      */
-    public Robot(HardwareMap hardwareMap, Telemetry telemetry, LinearOpMode opMode){
+    public Robot(HardwareMap hardwareMap, Telemetry telemetry, LinearOpMode opMode, boolean isAuto){
 
         this.hardwareMap = hardwareMap;
         this.telemetry = telemetry;
         this.opMode = opMode;
+        this.isAuto = isAuto;
 
         init();
 
     }
 
     private void init(){
-        hanger = new Hanger(this.hardwareMap, this.telemetry);
+        hanger = new Hanger(this.hardwareMap, this.telemetry, this.opMode);
         tm = new TeamMarkerer(this.hardwareMap, this.telemetry);
         mineralSystem = new MineralSystem(this.hardwareMap, this.telemetry);
         cv = new CV(this.hardwareMap, this.telemetry);
-        drive = new MecanumDrive(this.hardwareMap, this.telemetry, this.opMode);
+        drive = new MecanumDrive(this.hardwareMap, this.telemetry, this.opMode, this.isAuto);
 
         hanger.composeTelemetry();
         tm.composeTelemetry();

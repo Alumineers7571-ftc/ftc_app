@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.core.hardware;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.motors.NeveRest40Gearmotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -19,13 +22,25 @@ import java.util.Locale;
 
 public class MecanumDrive extends BaseHardware{
 
+    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
+    static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // This is < 1.0 if geared UP
+    static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
+    static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+            (WHEEL_DIAMETER_INCHES * 3.1415);
+    static final double     DRIVE_SPEED             = 0.6;
+    static final double     TURN_SPEED              = 0.5;
+
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
     private String hardwareName = "DriveTrain";
     private LinearOpMode opMode = null;
 
+    private ElapsedTime runtime = new ElapsedTime();
+
     private DcMotorEx FL, FR, BL, BR;
     private BNO055IMU imu;
+
+    private boolean isAuto = true;
 
     private PIDController pidRotate;
 
@@ -53,18 +68,21 @@ public class MecanumDrive extends BaseHardware{
         init();
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, LinearOpMode opMode){
+    public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, LinearOpMode opMode, boolean isAuto){
 
         this.hardwareMap = hardwareMap;
         this.telemetry = telemetry;
         this.opMode = opMode;
+        this.isAuto = isAuto;
 
         init();
     }
 
     private void init(){
 
-        initIMU();
+        if (!isAuto){
+            initIMU();
+        }
 
         pidRotate = new PIDController(RobotConstants.Kp, 0, 0);
 
@@ -97,7 +115,7 @@ public class MecanumDrive extends BaseHardware{
         globalAngle = getAngle();
 
         if(gamepad.left_stick_button){
-            rotate((int)startingAngle);
+            rotateTeleop((int)startingAngle);
         } else if(gamepad.dpad_down){
             startingAngle = globalAngle;
         }
@@ -174,6 +192,78 @@ public class MecanumDrive extends BaseHardware{
 
     }
 
+    private void setMotorPowers(double lPower, double rPower){
+
+        FL.setPower(lPower);
+        FR.setPower(rPower);
+        BL.setPower(lPower);
+        BR.setPower(rPower);
+
+    }
+
+    public void setMotorMode(DcMotor.RunMode mode){
+        FL.setMode(mode);
+        FR.setMode(mode);
+        BL.setMode(mode);
+        BR.setMode(mode);
+    }
+
+    public void encoderDrive(double speed,
+                             double leftInches, double rightInches,
+                             double timeoutS) {
+        int newFLTarget, newFRTarget, newBLTarget, newBRTarget;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            newFLTarget = FL.getCurrentPosition() + (int)(leftInches * 1120);
+            newFRTarget = FR.getCurrentPosition() + (int)(rightInches * 1120);
+            newBLTarget = BL.getCurrentPosition() + (int)(leftInches * 1120);
+            newBRTarget = BR.getCurrentPosition() + (int)(rightInches * 1120);
+
+            FL.setTargetPosition(newFLTarget);
+            FR.setTargetPosition(newFRTarget);
+            BL.setTargetPosition(newBLTarget);
+            BR.setTargetPosition(newBRTarget);
+
+            // Turn On RUN_TO_POSITION
+            setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            setMotorPowers(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (FL.isBusy() && FR.isBusy() && BL.isBusy() && BR.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Path1",  "Running to %7d :%7d :%7d :%7d", newFLTarget,  newFRTarget, newBLTarget, newBRTarget);
+                telemetry.addData("Path2",  "Running at %7d :%7d :%7d :%7d",
+                        FL.getCurrentPosition(),
+                        FR.getCurrentPosition(),
+                        BL.getCurrentPosition(),
+                        BR.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            setMotorPowers(0);
+
+            // Turn off RUN_TO_POSITION
+            setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            //  sleep(250);   // optional pause after each move
+        }
+    }
+
     private void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
@@ -196,7 +286,65 @@ public class MecanumDrive extends BaseHardware{
         pidRotate.setSetpoint(degrees);
         pidRotate.setInputRange(0, 180);
         pidRotate.setOutputRange(.20, power);
-        pidRotate.setTolerance(1);
+        pidRotate.setTolerance(2);
+        pidRotate.enable();
+
+        // getAngle() returns + when rotating counter clockwise (left) and - when rotating
+        // clockwise (right).
+
+        // rotate until turn is completed.
+
+        if (degrees < 0)
+        {
+            // On right turn we have to get off zero first.
+            while (opModeIsActive() && getAngle() == 0)
+            {
+                setMotorPowers(-power, power); //left
+                opMode.sleep(100);
+            }
+
+            do
+            {
+                power = pidRotate.performPID(getAngle()); // power will be - on right turn.
+                setMotorPowers(-power, power);
+            } while (opModeIsActive() && !pidRotate.onTarget());
+        }
+        else    // left turn.
+            do
+            {
+                power = pidRotate.performPID(getAngle()); // power will be + on left turn.
+                setMotorPowers(-power, power);
+            } while (opModeIsActive() && !pidRotate.onTarget());
+
+        // turn the motors off.
+        setMotorPowers(0);
+
+        // wait for rotation to stop.
+        opMode.sleep(500);
+
+        // reset angle tracking on new heading.
+        resetAngle();
+    }
+
+    public void rotateTeleop(int degrees) {
+        // restart imu angle tracking.
+        resetAngle();
+
+        // start pid controller. PID controller will monitor the turn angle with respect to the
+        // target angle and reduce power as we approach the target angle with a minimum of 20%.
+        // This is to prevent the robots momentum from overshooting the turn after we turn off the
+        // power. The PID controller reports onTarget() = true when the difference between turn
+        // angle and target angle is within 2% of target (tolerance). This helps prevent overshoot.
+        // The minimum power is determined by testing and must enough to prevent motor stall and
+        // complete the turn. Note: if the gap between the starting power and the stall (minimum)
+        // power is small, overshoot may still occur. Overshoot is dependant on the motor and
+        // gearing configuration, starting power, weight of the robot and the on target tolerance.
+
+        pidRotate.reset();
+        pidRotate.setSetpoint(degrees);
+        pidRotate.setInputRange(0, 180);
+        pidRotate.setOutputRange(.20, power);
+        pidRotate.setTolerance(2);
         pidRotate.enable();
 
         // rb.drive.getAngle() returns + when rotating counter clockwise (left) and - when rotating
@@ -266,8 +414,17 @@ public class MecanumDrive extends BaseHardware{
     @Override
     public void composeTelemetry() {
 
-        this.telemetry.addLine(hardwareName + " is inited");
+        this.telemetry.addData(hardwareName + ":", "%7d :%7d :%7d :%7d",
+                FL.getCurrentPosition(),
+                FR.getCurrentPosition(),
+                BL.getCurrentPosition(),
+                BR.getCurrentPosition());
 
     }
+
+    private boolean opModeIsActive(){
+        return opMode.opModeIsActive();
+    }
+
 
 }

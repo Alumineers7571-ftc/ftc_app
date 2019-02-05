@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.core.hardware;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.core.util.RobotConstants;
  */
 public class Hanger extends BaseHardware{
 
+    private LinearOpMode opMode;
     private HardwareMap hardwareMap;
     private String hardwareName = "Hanger";
     private DcMotor hanger;
@@ -37,6 +39,14 @@ public class Hanger extends BaseHardware{
 
         hardwareMap = hMap;
         this.telemetry = telemetry;
+        init();
+    }
+
+    public Hanger(HardwareMap hMap, Telemetry telemetry, LinearOpMode opMode){
+
+        hardwareMap = hMap;
+        this.telemetry = telemetry;
+        this.opMode = opMode;
         init();
     }
 
@@ -114,22 +124,17 @@ public class Hanger extends BaseHardware{
 
     }
 
-    /**
-     * Called in a while(!isAtGround){}
-     */
     public void moveToGround(){
 
-        if(range.getDistance(DistanceUnit.INCH) < (inchesFromGround)){
-
-            hanger.setPower(0);
-            isAtGround = true;
-
-        } else {
+        while((range.getDistance(DistanceUnit.INCH) > (inchesFromGround)) && opMode.opModeIsActive()){
 
             hanger.setPower(1);
             isAtGround = false;
 
         }
+
+        hanger.setPower(0);
+        isAtGround = true;
 
 
     }

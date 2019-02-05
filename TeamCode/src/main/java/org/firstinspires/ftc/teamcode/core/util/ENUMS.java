@@ -9,4 +9,9 @@ public class ENUMS {
     public enum DriveMode{
         MECANUM, FIELDCENTRIC
     }
+
+    public enum AutoStates{
+        START, END, DROP, HITGOLD, NAVTOWALL, NAVTOTM, DROPTM, PARK
+    }
+
 }

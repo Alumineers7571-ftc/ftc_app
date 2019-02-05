@@ -50,6 +50,7 @@ public class CV extends  BaseHardware{
     private String hardwareName;
 
     private GoldAlignDetector detector;
+    private ENUMS.GoldLocation goldLocation = ENUMS.GoldLocation.UNKNOWN;
 
     public CV(HardwareMap hardwareMap, Telemetry telemetry){
 
@@ -163,17 +164,17 @@ public class CV extends  BaseHardware{
 
         if(detector.isFound()) {
             if (xPos > -10 && xPos < 180) {
-                return ENUMS.GoldLocation.LEFT;
+                goldLocation = ENUMS.GoldLocation.LEFT;
             } else if (xPos >= 180 && xPos < 420) {
-                return ENUMS.GoldLocation.CENTER;
+                goldLocation = ENUMS.GoldLocation.CENTER;
             } else if (xPos >= 420 && xPos < 610) {
-                return ENUMS.GoldLocation.RIGHT;
+                goldLocation = ENUMS.GoldLocation.RIGHT;
             }
         } else {
-            return ENUMS.GoldLocation.UNKNOWN;
+            goldLocation =  ENUMS.GoldLocation.UNKNOWN;
         }
 
-        return null;
+        return goldLocation;
     }
 
     /**
@@ -196,7 +197,7 @@ public class CV extends  BaseHardware{
     @Override
     public void composeTelemetry() {
 
-        this.telemetry.addLine(hardwareName + " is inited");
+        this.telemetry.addLine(hardwareName + ": " + goldLocation);
 
     }
 }
