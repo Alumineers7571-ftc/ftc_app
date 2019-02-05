@@ -10,7 +10,7 @@ public class IntakeTest extends LinearOpMode {
     private double intakePower = 0.00;
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
 
         intake = hardwareMap.get(DcMotorEx.class, "intake");
 

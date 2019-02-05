@@ -16,7 +16,7 @@ public class Crater extends LinearOpMode {
     private int sampleTurnDeg = 0;
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
 
         while(!isStopRequested() && !isStarted()) {
 
