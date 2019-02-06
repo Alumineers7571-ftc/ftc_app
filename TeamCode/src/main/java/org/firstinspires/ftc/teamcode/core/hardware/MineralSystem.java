@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.core.hardware;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
@@ -17,7 +18,9 @@ public class MineralSystem extends BaseHardware{
     private Telemetry telemetry;
     private String hardwareName = "MineralSystem";
 
-    private DcMotorEx pivoter, extendo;
+    private boolean motor;
+
+    private DcMotorEx pivoter, extendo, intakeMotor;
     private CRServoImplEx intake;
     private ServoImplEx gate;
 
@@ -40,6 +43,15 @@ public class MineralSystem extends BaseHardware{
         init();
     }
 
+    public MineralSystem(HardwareMap hardwareMap, Telemetry telemetry, boolean motor){
+
+        this.hardwareMap = hardwareMap;
+        this.telemetry = telemetry;
+        this.motor = motor;
+
+        init();
+    }
+
     /**
      *
      * @param hardwareMap instance of hardwareMap
@@ -55,12 +67,20 @@ public class MineralSystem extends BaseHardware{
         init();
     }
 
-    private void init(){
+    private void init() {
 
         extendo = hardwareMap.get(DcMotorEx.class, "extendo");
         pivoter = hardwareMap.get(DcMotorEx.class, "pivoter");
 
-        intake = hardwareMap.get(CRServoImplEx.class, "intakeL");
+        if (motor) {
+
+            intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+            intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE); // it's geared
+
+        } else {
+
+            intake = hardwareMap.get(CRServoImplEx.class, "intakeL");
+        }
 
         gate = hardwareMap.get(ServoImplEx.class, "gate");
 
@@ -98,12 +118,20 @@ public class MineralSystem extends BaseHardware{
 
         }
 
-        if(gamepad.left_bumper){
-            runIntake(-1);
-        } else if(gamepad.right_bumper) {
-            runIntake(1);
+        if(motor){
+            if(gamepad.right_bumper) {
+                runIntake(0.4);
+            } else if(gamepad.left_bumper) {
+                runIntake(-0.4);
+            }
         } else {
-            runIntake(0);
+            if (gamepad.left_bumper) {
+                runIntake(-1);
+            } else if (gamepad.right_bumper) {
+                runIntake(1);
+            } else {
+                runIntake(0);
+            }
         }
 
         gate.setPosition(Range.clip(Math.abs(gamepad.right_trigger - 1), 0.4, 1));
@@ -123,8 +151,11 @@ public class MineralSystem extends BaseHardware{
      */
     public void runIntake(double power){
 
-        intake.setPower(power);
-
+        if(motor){
+            intakeMotor.setPower(power);
+        } else {
+            intake.setPower(power);
+        }
     }
 
     @Override
