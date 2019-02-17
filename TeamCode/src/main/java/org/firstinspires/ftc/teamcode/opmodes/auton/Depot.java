@@ -7,16 +7,16 @@ import org.firstinspires.ftc.teamcode.core.hardware.Robot;
 import org.firstinspires.ftc.teamcode.core.util.ENUMS;
 
 @Autonomous
-public class Crater extends LinearOpMode {
+public class Depot extends LinearOpMode {
 
-    private Robot robot = new Robot(hardwareMap, telemetry, Crater.this, true, true);
+    private Robot robot = new Robot(hardwareMap, telemetry, Depot.this, true, true);
 
     private ENUMS.GoldLocation goldLocation = ENUMS.GoldLocation.UNKNOWN;
 
     private ENUMS.AutoStates robo = ENUMS.AutoStates.START;
 
     private int sampleTurnDeg = 0;
-    private int wallTurnDeg = -45;
+    private int wallTurnDeg = 45;
     private int wallNavDist = 24;
 
     @Override
