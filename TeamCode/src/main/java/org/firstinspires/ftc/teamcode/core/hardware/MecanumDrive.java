@@ -30,6 +30,8 @@ public class MecanumDrive extends BaseHardware{
     static final double     DRIVE_SPEED             = 0.6;
     static final double     TURN_SPEED              = 0.5;
 
+    private double fl = 0, fr = 0, bl = 0, br = 0;
+
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
     private String hardwareName = "DriveTrain";
@@ -80,9 +82,10 @@ public class MecanumDrive extends BaseHardware{
 
     private void init(){
 
-        if (!isAuto){
-            initIMU();
-        }
+        FL = hardwareMap.get(DcMotorEx.class, "fl");
+        FR = hardwareMap.get(DcMotorEx.class, "fr");
+        BL = hardwareMap.get(DcMotorEx.class, "bl");
+        BR = hardwareMap.get(DcMotorEx.class, "br");
 
         pidRotate = new PIDController(RobotConstants.Kp, 0, 0);
 
@@ -104,6 +107,10 @@ public class MecanumDrive extends BaseHardware{
         // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
         // and named "imu".
         imu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        imu.initialize(parameters);
+
+        while(!opMode.isStopRequested() && !imu.isGyroCalibrated()){}
 
         startingAngle = getAngle();
 
@@ -127,7 +134,7 @@ public class MecanumDrive extends BaseHardware{
                 driveMode = ENUMS.DriveMode.MECANUM;
             }
         }
-        double fl = 0, fr = 0, bl = 0, br = 0;
+
 
         switch (driveMode) {
             case MECANUM: {
@@ -162,15 +169,22 @@ public class MecanumDrive extends BaseHardware{
                 break;
             }
         }
+
         fl += correction;
         fr -= correction;
         bl += correction;
         br -= correction;
 
+        fl = ((gamepad.left_stick_y) + gamepad.right_stick_x + gamepad.left_stick_x);
+        fr = ((gamepad.left_stick_y) - gamepad.right_stick_x - gamepad.left_stick_x);
+        bl = ((gamepad.left_stick_y) + gamepad.right_stick_x - gamepad.left_stick_x);
+        br = ((gamepad.left_stick_y) - gamepad.right_stick_x + gamepad.left_stick_x);
+
         setMotorPowers(fl, fr, bl, br);
 
         this.telemetry.addLine("Motor powers: fl: " + fl + " fr: " + fr + " bl: " + bl + " br: " + br);
         this.telemetry.addLine("heading: " + globalAngle);
+        this.telemetry.addLine("mode: " + driveMode);
         this.telemetry.update();
     }
 
@@ -209,7 +223,7 @@ public class MecanumDrive extends BaseHardware{
     }
 
     public void encoderDrive(double speed,
-                             double leftInches, double rightInches,
+                             double inches,
                              double timeoutS) {
         int newFLTarget, newFRTarget, newBLTarget, newBRTarget;
 
@@ -217,10 +231,10 @@ public class MecanumDrive extends BaseHardware{
         if (opModeIsActive()) {
 
             // Determine new target position, and pass to motor controller
-            newFLTarget = FL.getCurrentPosition() + (int)(leftInches * 1120);
-            newFRTarget = FR.getCurrentPosition() + (int)(rightInches * 1120);
-            newBLTarget = BL.getCurrentPosition() + (int)(leftInches * 1120);
-            newBRTarget = BR.getCurrentPosition() + (int)(rightInches * 1120);
+            newFLTarget = FL.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+            newFRTarget = FR.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+            newBLTarget = BL.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+            newBRTarget = BR.getCurrentPosition() + (int)(inches  * COUNTS_PER_INCH);
 
             FL.setTargetPosition(newFLTarget);
             FR.setTargetPosition(newFRTarget);

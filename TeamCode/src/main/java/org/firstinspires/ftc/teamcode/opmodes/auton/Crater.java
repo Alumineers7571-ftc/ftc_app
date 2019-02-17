@@ -1,19 +1,23 @@
 package org.firstinspires.ftc.teamcode.opmodes.auton;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.core.hardware.Robot;
 import org.firstinspires.ftc.teamcode.core.util.ENUMS;
 
+@Autonomous
 public class Crater extends LinearOpMode {
 
-    private Robot robot = new Robot(hardwareMap, telemetry, Crater.this, true);
+    private Robot robot = new Robot(hardwareMap, telemetry, Crater.this, true, true);
 
     private ENUMS.GoldLocation goldLocation = ENUMS.GoldLocation.UNKNOWN;
 
     private ENUMS.AutoStates robo = ENUMS.AutoStates.START;
 
     private int sampleTurnDeg = 0;
+    private int wallTurnDeg = -45;
+    private int wallNavDist = 24;
 
     @Override
     public void runOpMode() {
@@ -29,10 +33,12 @@ public class Crater extends LinearOpMode {
                 }
                 case CENTER:{
                     sampleTurnDeg = 0;
+                    wallNavDist += 14.5;
                     break;
                 }
                 case RIGHT:{
                     sampleTurnDeg = -30;
+                    wallNavDist += (14.5*2);
                 }
             }
 
@@ -64,9 +70,9 @@ public class Crater extends LinearOpMode {
                 case HITGOLD:{
 
                     robot.drive.rotate(sampleTurnDeg);
-                    robot.drive.encoderDrive(0.6, 24, 24, 4.0);
+                    robot.drive.encoderDrive(0.6, 24, 4.0);
                     sleep(300);
-                    robot.drive.encoderDrive(0.6, -24, -24, 4.0);
+                    robot.drive.encoderDrive(0.6, -24, 4.0);
 
                     robo = ENUMS.AutoStates.NAVTOWALL;
                     break;
@@ -74,6 +80,10 @@ public class Crater extends LinearOpMode {
 
                 case NAVTOWALL:{
 
+
+                    robot.drive.rotate(wallTurnDeg);
+                    robot.drive.encoderDrive(0.6, wallNavDist, 10.0);
+                    robot.drive.rotate(45);
                     //robot.drive.rotate(to hit wall);
 
                 }
