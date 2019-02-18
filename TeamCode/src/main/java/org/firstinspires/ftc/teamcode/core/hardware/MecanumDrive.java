@@ -5,6 +5,7 @@ import com.qualcomm.hardware.motors.NeveRest40Gearmotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -47,7 +48,7 @@ public class MecanumDrive extends BaseHardware{
     private PIDController pidRotate;
 
     private Orientation lastAngles = new Orientation();
-    private double startingAngle, globalAngle, power = .6, correction;
+    private double startingAngle, globalAngle, power = .4, correction;
 
     private boolean pidEnabled = false;
 
@@ -86,6 +87,17 @@ public class MecanumDrive extends BaseHardware{
         FR = hardwareMap.get(DcMotorEx.class, "fr");
         BL = hardwareMap.get(DcMotorEx.class, "bl");
         BR = hardwareMap.get(DcMotorEx.class, "br");
+
+        FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        FL.setDirection(DcMotorSimple.Direction.REVERSE);
+        BL.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         pidRotate = new PIDController(RobotConstants.Kp, 0, 0);
 

@@ -197,7 +197,7 @@ public class CV extends  BaseHardware{
     @Override
     public void composeTelemetry() {
 
-        this.telemetry.addLine(hardwareName + ": " + goldLocation);
+        this.telemetry.addLine("cv: " + goldLocation);
 
     }
 }

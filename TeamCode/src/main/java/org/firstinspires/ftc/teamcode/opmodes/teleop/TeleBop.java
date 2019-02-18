@@ -12,6 +12,7 @@ public class TeleBop extends LinearOpMode {
     public void runOpMode() {
 
         Robot robot = new Robot(hardwareMap, telemetry, TeleBop.this, false, true);
+        robot.drive.initIMU();
 
         while(!isStarted() && !isStopRequested()){
 

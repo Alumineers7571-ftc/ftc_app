@@ -40,14 +40,17 @@ public class Robot {
         hanger = new Hanger(this.hardwareMap, this.telemetry, this.opMode);
         tm = new TeamMarkerer(this.hardwareMap, this.telemetry);
         mineralSystem = new MineralSystem(this.hardwareMap, this.telemetry, this.motor);
-        cv = new CV(this.hardwareMap, this.telemetry);
         drive = new MecanumDrive(this.hardwareMap, this.telemetry, this.opMode, this.isAuto);
 
         hanger.composeTelemetry();
         tm.composeTelemetry();
         mineralSystem.composeTelemetry();
-        cv.composeTelemetry();
         drive.composeTelemetry();
+
+        if (isAuto) {
+            cv = new CV(this.hardwareMap, this.telemetry);
+            cv.composeTelemetry();
+        }
 
         telemetry.update();
     }

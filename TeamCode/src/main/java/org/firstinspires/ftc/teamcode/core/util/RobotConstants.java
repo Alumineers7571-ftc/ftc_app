@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.core.util;
 public class RobotConstants {
 
     //drive
-    public static double Kp = 0.01;
+    public static double Kp = 0.0075;
 
     //hanger
     public static double SENSOR_IN_FROM_GROUND = 2.7;
