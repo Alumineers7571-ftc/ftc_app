@@ -11,7 +11,7 @@ public class ENUMS {
     }
 
     public enum AutoStates{
-        START, END, DROP, HITGOLD, NAVTOWALL, NAVTOTM, DROPTM, PARK
+        START, END, DROP, HITGOLD, NAVTOWALL, ALIGNWITHWALL, NAVTOTM, DROPTM, PARK
     }
 
 }

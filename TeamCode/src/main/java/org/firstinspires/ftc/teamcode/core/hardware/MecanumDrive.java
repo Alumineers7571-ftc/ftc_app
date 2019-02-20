@@ -106,6 +106,9 @@ public class MecanumDrive extends BaseHardware{
         pidRotate = new PIDController(RobotConstants.Kp, 0, 0);
 
         pidRotate.reset();
+        pidRotate.setInputRange(0, 180);
+        pidRotate.setOutputRange(.20, power);
+        pidRotate.setTolerance(2);
         pidRotate.disable();
 
     }
@@ -138,9 +141,13 @@ public class MecanumDrive extends BaseHardware{
         globalAngle = getAngle();
 
         if(gamepad.left_stick_button){
-            rotateTeleop((int)startingAngle);
+            pidRotate.setSetpoint(startingAngle);
+            pidRotate.enable();
+            correction = pidRotate.performPID(globalAngle);
         } else if(gamepad.dpad_down){
             startingAngle = globalAngle;
+        } else {
+            pidRotate.disable();
         }
 
         if(gamepad.right_stick_button){
@@ -307,28 +314,26 @@ public class MecanumDrive extends BaseHardware{
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
 
+    //get there ASAP no rocky ya dig
     public void drive(double inches){
 
         setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); //this can't be RUN_USING_ENCODERS because the front encoders are not OK no lahoma
 
-        int newFLTarget, newFRTarget, newBLTarget, newBRTarget;
+        int target;
 
-        newFLTarget = (int) (inches * COUNTS_PER_INCH);
-        newFRTarget = (int) (inches * COUNTS_PER_INCH);
-        newBLTarget = (int) (inches * COUNTS_PER_INCH);
-        newBRTarget = (int) (inches * COUNTS_PER_INCH);
+        target = (int) (inches * COUNTS_PER_INCH);
 
         while(opModeIsActive()){
 
-            if(newFLTarget < 0){
-                if ((Math.abs(FL.getCurrentPosition()) > newFLTarget) && Math.abs(FR.getCurrentPosition()) > newFRTarget) {
+            if(target < 0){
+                if ((Math.abs(BL.getCurrentPosition()) > target) && Math.abs(BR.getCurrentPosition()) > target) {
                     setMotorPowers(-0.5);
                 } else {
                     setMotorPowers(0);
                 }
             } else {
-                if ((Math.abs(FL.getCurrentPosition()) < newFLTarget) && Math.abs(FR.getCurrentPosition()) < newFRTarget) {
+                if ((Math.abs(BL.getCurrentPosition()) < target) && Math.abs(BR.getCurrentPosition()) < target) {
                     setMotorPowers(0.5);
                 } else {
                     setMotorPowers(0);

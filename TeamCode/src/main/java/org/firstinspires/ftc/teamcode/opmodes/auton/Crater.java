@@ -31,6 +31,7 @@ public class Crater extends LinearOpMode {
     private int wallTurn2Deg = 220;
     private int wallNav2Dist = 7;
     private int depotNavDist = 42;
+    private int craterNavDist = -60;
 
     private boolean imuDone = false;
 
@@ -83,7 +84,7 @@ public class Crater extends LinearOpMode {
                     telemetry.addData("heading:", robot.drive.getAngle());
                     telemetry.update();
 
-                    robot.drive.turnAbsoulte(180);
+                    robot.drive.turnAbsoulte(sampleTurnDeg);
 
                     robo = ENUMS.AutoStates.HITGOLD;
                     break;
@@ -91,45 +92,67 @@ public class Crater extends LinearOpMode {
 
                 case HITGOLD:{
 
-                    robot.drive.drive(-3);
-                    sleep(300);
                     robot.drive.drive(sampleHitDist);
-                    sleep(300);
+                    sleep(200);
                     robot.drive.drive(6);
-                    sleep(300);
-
-                    /*
-                    encoderDrive(0.4, -3, 3.0);
-                    //robot.drive.turnAbsoulte(sampleTurnDeg);
-                    encoderDrive(0.4, sampleHitDist, 4.0);
-                    encoderDrive(0.4, 6, 4.0);
-                    */
+                    sleep(200);
 
                     robo = ENUMS.AutoStates.NAVTOWALL;
                     break;
                 }
 
-                case NAVTOWALL:{
-
+                case NAVTOWALL: {
 
                     robot.drive.turnAbsoulte(wallTurn1Deg);
-                    sleep(300);
-                    encoderDrive(0.6, wallNav1Dist, 10.0);
+                    sleep(200);
+                    robot.drive.drive(wallNav1Dist);
                     robot.drive.turnAbsoulte(wallTurn2Deg); //facing depot while parallel to wall
-                    sleep(300);
-                    encoderDrive(0.6, wallNav2Dist, 2.0);
+                    sleep(200);
+                    robot.drive.drive(wallNav2Dist);
+
+                    robo = ENUMS.AutoStates.ALIGNWITHWALL;
+                    break;
+                }
+
+                case ALIGNWITHWALL:{
+
                     robot.drive.turnAbsoulte(135);
-                    sleep(300);
+                    sleep(200);
                     robot.drive.setStrafePower(-0.6);
                     sleep(200);
                     robot.drive.setStrafePower(0.2);
                     sleep(200);
                     robot.drive.setStrafePower(0);
-                    encoderDrive(0.6, 42, 10.0);
+                    sleep(200);
+
+                    robo = ENUMS.AutoStates.NAVTOTM;
+                    break;
+
+                }
+
+                case NAVTOTM:{
+
+                    robot.drive.drive(depotNavDist);
+
+                    robo = ENUMS.AutoStates.DROPTM;
+                    break;
+                }
+
+                case DROPTM: {
+
+                    robot.tm.setTMDown();
+                    sleep(500);
+
+                    robo = ENUMS.AutoStates.PARK;
+                    break;
+                }
+
+                case PARK: {
+
+                    robot.drive.drive(craterNavDist); // approx.
 
                     robo = ENUMS.AutoStates.END;
                     break;
-
                 }
 
                 case END:{
@@ -140,6 +163,8 @@ public class Crater extends LinearOpMode {
 
             }
 
+            robot.tm.setTMUp();
+
             if(imuDone){
                 telemetry.addData("heading:", robot.drive.getAngle());
             }
@@ -148,63 +173,4 @@ public class Crater extends LinearOpMode {
         }
 
     }
-
-
-    public void encoderDrive(double speed,
-                             double inches,
-                             double timeoutS) {
-        int newFLTarget, newFRTarget, newBLTarget, newBRTarget;
-
-        robot.drive.setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.drive.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        // Ensure that the opmode is still active
-        if (opModeIsActive()) {
-
-            // Determine new target position, and pass to motor controller
-            newFLTarget = (int) (inches * COUNTS_PER_INCH);
-            newFRTarget = (int) (inches * COUNTS_PER_INCH);
-            newBLTarget = (int) (inches * COUNTS_PER_INCH);
-            newBRTarget = (int) (inches * COUNTS_PER_INCH);
-
-            /*robot.drive.FL.setTargetPosition(newFLTarget);
-            robot.drive.FR.setTargetPosition(newFRTarget);
-            robot.drive.BL.setTargetPosition(newBLTarget);
-            robot.drive.BR.setTargetPosition(newBRTarget);*/
-
-            // Turn On RUN_TO_POSITION
-            robot.drive.setMotorMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // reset the timeout time and start motion.
-
-            robot.drive.setMotorPowers(Math.abs(speed));
-
-            // keep looping while we are still active, and there is time left, and both motors are running.
-            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
-            // its target position, the motion will stop.  This is "safer" in the event that the robot will
-            // always end the motion as soon as possible.
-            // However, if you require that BOTH motors have finished their moves before the robot continues
-            // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            while (opModeIsActive() &&
-                    (robot.drive.isBusy())) {
-                // Display it for the driver.
-                telemetry.addData("Path1", "Running to %7d :%7d :%7d :%7d", newFLTarget, newFRTarget, newBLTarget, newBRTarget);
-                //telemetry.addData("Path2",  "Running at %7d :%7d :%7d :%7d",
-                //FL.getCurrentPosition(),
-                //      FR.getCurrentPosition(),
-                //    BL.getCurrentPosition(),
-                //  BR.getCurrentPosition());
-                telemetry.update();
-            }
-
-            // Stop all motion;
-            robot.drive.setMotorPowers(0);
-
-            // Turn off RUN_TO_POSITION
-            robot.drive.setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            sleep(250);   // optional pause after each move
-        }
-    }
-
 }
