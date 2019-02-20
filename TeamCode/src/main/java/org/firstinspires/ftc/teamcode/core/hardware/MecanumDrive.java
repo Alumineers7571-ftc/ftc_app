@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -21,9 +22,10 @@ import org.firstinspires.ftc.teamcode.core.util.RobotConstants;
 
 import java.util.Locale;
 
+
 public class MecanumDrive extends BaseHardware{
 
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
+    static final double     COUNTS_PER_MOTOR_REV    = 1120 ;    // eg: TETRIX Motor Encoder
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // This is < 1.0 if geared UP
     static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -37,6 +39,8 @@ public class MecanumDrive extends BaseHardware{
     private Telemetry telemetry;
     private String hardwareName = "DriveTrain";
     private LinearOpMode opMode = null;
+
+    private boolean turnDone = false;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -200,6 +204,10 @@ public class MecanumDrive extends BaseHardware{
         this.telemetry.update();
     }
 
+    public void setStrafePower(double power){
+        setMotorPowers(power, -power, -power, power);
+    }
+
     private void setMotorPowers(double fl, double fr, double bl, double br){
 
         FL.setPower(fl);
@@ -209,7 +217,7 @@ public class MecanumDrive extends BaseHardware{
 
     }
 
-    private void setMotorPowers(double power){
+    public void setMotorPowers(double power){
 
         FL.setPower(power);
         FR.setPower(power);
@@ -269,7 +277,6 @@ public class MecanumDrive extends BaseHardware{
             while (opModeIsActive() &&
                     (runtime.seconds() < timeoutS) &&
                     (FL.isBusy() && FR.isBusy() && BL.isBusy() && BR.isBusy())) {
-
                 // Display it for the driver.
                 telemetry.addData("Path1",  "Running to %7d :%7d :%7d :%7d", newFLTarget,  newFRTarget, newBLTarget, newBRTarget);
                 telemetry.addData("Path2",  "Running at %7d :%7d :%7d :%7d",
@@ -286,12 +293,50 @@ public class MecanumDrive extends BaseHardware{
             // Turn off RUN_TO_POSITION
             setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-            //  sleep(250);   // optional pause after each move
+            opMode.sleep(250);   // optional pause after each move
         }
+    }
+
+    public boolean isBusy(){
+
+
+        return (FL.isBusy() && FR.isBusy() && BL.isBusy() && BR.isBusy());
     }
 
     private void resetAngle() {
         lastAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    }
+
+    public void drive(double inches){
+
+        setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setMotorMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        int newFLTarget, newFRTarget, newBLTarget, newBRTarget;
+
+        newFLTarget = (int) (inches * COUNTS_PER_INCH);
+        newFRTarget = (int) (inches * COUNTS_PER_INCH);
+        newBLTarget = (int) (inches * COUNTS_PER_INCH);
+        newBRTarget = (int) (inches * COUNTS_PER_INCH);
+
+        while(opModeIsActive()){
+
+            if(newFLTarget < 0){
+                if ((Math.abs(FL.getCurrentPosition()) > newFLTarget) && Math.abs(FR.getCurrentPosition()) > newFRTarget) {
+                    setMotorPowers(-0.5);
+                } else {
+                    setMotorPowers(0);
+                }
+            } else {
+                if ((Math.abs(FL.getCurrentPosition()) < newFLTarget) && Math.abs(FR.getCurrentPosition()) < newFRTarget) {
+                    setMotorPowers(0.5);
+                } else {
+                    setMotorPowers(0);
+                }
+            }
+
+        }
+
     }
 
     public void rotate(int degrees) {
@@ -350,6 +395,42 @@ public class MecanumDrive extends BaseHardware{
 
         // reset angle tracking on new heading.
         resetAngle();
+    }
+
+    public void turnAbsoulte(double target){
+
+        while(opModeIsActive() && !turnDone) {
+
+            double heading = getAngle();
+
+            double Error = heading - target;
+            double Kp = 0.03;
+            double leftPower;
+            double rightPower;
+
+            if ((Math.abs(Error)) > 2) {
+                leftPower = Error * Kp;
+                rightPower = -Error * Kp;
+                leftPower = Range.clip(leftPower, -1, 1);
+                rightPower = Range.clip(rightPower, -1, 1);
+
+                FL.setPower(leftPower);
+                FR.setPower(rightPower);
+                BL.setPower(leftPower);
+                BR.setPower(rightPower);
+            } else {
+                FL.setPower(0);
+                FR.setPower(0);
+                BL.setPower(0);
+                BR.setPower(0);
+
+                turnDone = true;
+            }
+            telemetry.addLine("Error: " + Error);
+            telemetry.update();
+
+        }
+
     }
 
     public void rotateTeleop(int degrees) {
