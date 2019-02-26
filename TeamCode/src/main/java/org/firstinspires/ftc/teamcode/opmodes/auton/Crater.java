@@ -30,7 +30,7 @@ public class Crater extends LinearOpMode {
     private int wallTurn1Deg = 90;
     private int wallNav1Dist = 30;
     private int wallTurn2Deg = 45;
-    private int wallNav2Dist = 7;
+    private int wallNav2Dist = 19;
     private int depotNavDist = 35;
     private int craterNavDist = -60;
 
@@ -120,9 +120,9 @@ public class Crater extends LinearOpMode {
 
                     robot.drive.turnAbsoulte(135);
                     sleep(200);
-                    robot.drive.setStrafePower(-0.6);
+                    robot.drive.setStrafePower(0.6);
                     sleep(200);
-                    robot.drive.setStrafePower(0.2);
+                    robot.drive.setStrafePower(-0.2);
                     sleep(200);
                     robot.drive.setStrafePower(0);
                     sleep(200);
