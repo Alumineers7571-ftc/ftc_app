@@ -26,7 +26,7 @@ public class Crater extends LinearOpMode {
 
     private int sampleTurnDeg = 180;
     private int sampleHitDist = -23;
-    private int sampleReturnDist = 8;
+    private int sampleReturnDist = 10;
     private int wallTurn1Deg = 90;
     private int wallNav1Dist = 30;
     private int wallTurn2Deg = 45;
@@ -47,10 +47,10 @@ public class Crater extends LinearOpMode {
 
             switch(goldLocation){
                 case LEFT:{
-                    sampleTurnDeg = -135;
+                    sampleTurnDeg = 225;
                     wallNav1Dist -= 14.5;
                     sampleHitDist = -27;
-                    sampleReturnDist += 2;
+                    sampleReturnDist = 12;
                     //wallTurn1Deg = 45;
                     break;
                 }
@@ -59,10 +59,10 @@ public class Crater extends LinearOpMode {
                     break;
                 }
                 case RIGHT:{
-                    sampleTurnDeg = -225;
+                    sampleTurnDeg = 135;
                     wallNav1Dist += 14.5;
                     sampleHitDist = -27;
-                    sampleReturnDist += 2;
+                    sampleReturnDist = 12;
                     //wallTurn1Deg = 45 + 90;
                 }
             }
@@ -71,6 +71,9 @@ public class Crater extends LinearOpMode {
 
             telemetry.update();
         }
+
+        robot.drive.initIMU();
+        imuDone = true;
 
         while(!isStopRequested() && opModeIsActive()){
 
@@ -84,10 +87,6 @@ public class Crater extends LinearOpMode {
                 case DROP:{
 
                     robot.hanger.moveToGround();
-
-                    robot.drive.initIMU();
-
-                    imuDone = true;
 
                     telemetry.addData("heading:", robot.drive.getAngle());
                     telemetry.update();
