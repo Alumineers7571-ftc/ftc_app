@@ -321,22 +321,25 @@ public class MecanumDrive extends BaseHardware{
         setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); //this can't be RUN_USING_ENCODERS because the front encoders are not OK no lahoma
 
         int target;
+        boolean movementDone = false;
 
         target = (int) (inches * COUNTS_PER_INCH);
 
-        while(opModeIsActive()){
+        while(opModeIsActive() && !movementDone){
 
             if(target < 0){
-                if ((Math.abs(BL.getCurrentPosition()) > target) && Math.abs(BR.getCurrentPosition()) > target) {
+                if ((FL.getCurrentPosition() > target) && FR.getCurrentPosition() > target) {
                     setMotorPowers(-0.5);
                 } else {
                     setMotorPowers(0);
+                    movementDone = true;
                 }
             } else {
-                if ((Math.abs(BL.getCurrentPosition()) < target) && Math.abs(BR.getCurrentPosition()) < target) {
+                if ((FL.getCurrentPosition() < target) && FR.getCurrentPosition() < target) {
                     setMotorPowers(0.5);
                 } else {
                     setMotorPowers(0);
+                    movementDone = true;
                 }
             }
 
@@ -403,6 +406,8 @@ public class MecanumDrive extends BaseHardware{
     }
 
     public void turnAbsoulte(double target){
+
+        turnDone = false;
 
         while(opModeIsActive() && !turnDone) {
 

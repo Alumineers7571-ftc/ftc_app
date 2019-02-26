@@ -48,7 +48,7 @@ public class TeamMarkerer extends BaseHardware{
 
         tm = hardwareMap.servo.get("tm");
 
-        setTMUp();
+        setTMDown();
     }
 
     @Override

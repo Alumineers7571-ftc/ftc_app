@@ -118,6 +118,8 @@ public class MineralSystem extends BaseHardware{
             runIntake(0.45);
         } else if(gamepad.left_bumper) {
              runIntake(-0.5);
+        } else {
+            runIntake(0);
         }
 
 
