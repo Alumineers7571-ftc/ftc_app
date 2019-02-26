@@ -25,14 +25,14 @@ public class Crater extends LinearOpMode {
     private ENUMS.AutoStates robo = ENUMS.AutoStates.START;
 
     private int sampleTurnDeg = 180;
-    private int sampleHitDist = -16;
+    private int sampleHitDist = -23;
     private int sampleReturnDist = 8;
     private int wallTurn1Deg = 90;
     private int wallNav1Dist = 30;
     private int wallTurn2Deg = 45;
-    private int wallNav2Dist = 19;
-    private int depotNavDist = 35;
-    private int craterNavDist = -60;
+    private int wallNav2Dist = 14;
+    private int depotNavDist = 52;
+    private int craterNavDist = -75;
 
     private boolean imuDone = false;
 
@@ -49,6 +49,9 @@ public class Crater extends LinearOpMode {
                 case LEFT:{
                     sampleTurnDeg = -135;
                     wallNav1Dist -= 14.5;
+                    sampleHitDist = -27;
+                    sampleReturnDist += 2;
+                    //wallTurn1Deg = 45;
                     break;
                 }
                 case CENTER:{
@@ -58,9 +61,13 @@ public class Crater extends LinearOpMode {
                 case RIGHT:{
                     sampleTurnDeg = -225;
                     wallNav1Dist += 14.5;
+                    sampleHitDist = -27;
+                    sampleReturnDist += 2;
+                    //wallTurn1Deg = 45 + 90;
                 }
             }
 
+            robot.tm.setTMDown();
 
             telemetry.update();
         }

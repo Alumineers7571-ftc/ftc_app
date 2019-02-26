@@ -126,7 +126,7 @@ public class Hanger extends BaseHardware{
 
     public void moveToGround(){
 
-        while((range.getDistance(DistanceUnit.INCH) > (inchesFromGround)) && opMode.opModeIsActive()){
+        while((range.getDistance(DistanceUnit.INCH) < (inchesFromGround)) && opMode.opModeIsActive()){
 
             hanger.setPower(1);
             isAtGround = false;
