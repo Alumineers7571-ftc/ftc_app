@@ -174,6 +174,8 @@ public class Crater extends LinearOpMode {
 
             robot.tm.setTMDown();
 
+            idle();
+            
             if(imuDone){
                 telemetry.addData("heading:", robot.drive.getAngle());
             }
