@@ -24,6 +24,8 @@ public class TeleBop extends LinearOpMode {
             robot.hanger.controlSystem(gamepad1);
             robot.mineralSystem.controlSystem(gamepad2);
             robot.drive.controlSystem(gamepad1);
+            
+            idle();
         }
     }
 }
